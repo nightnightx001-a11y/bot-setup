@@ -5,7 +5,10 @@
 
 $ErrorActionPreference = "SilentlyContinue"
 
-# --- สี + Header ---
+$GITHUB_USERNAME = "nightnightx001-a11y"
+$GITHUB_REPO     = "bot-setup"
+$RAW_BASE        = "https://raw.githubusercontent.com/$GITHUB_USERNAME/$GITHUB_REPO/main"
+
 function Write-Header {
     Clear-Host
     Write-Host "============================================" -ForegroundColor Cyan
@@ -14,7 +17,6 @@ function Write-Header {
     Write-Host ""
 }
 
-# --- ตรวจสอบ Admin ---
 function Check-Admin {
     $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)
@@ -27,7 +29,6 @@ function Check-Admin {
     Write-Host "[OK] กำลังรันในฐานะ Administrator" -ForegroundColor Green
 }
 
-# --- หา Path ของ Fishstrap ---
 function Get-FishstrapPath {
     $commonPaths = @(
         "$env:LOCALAPPDATA\Fishstrap",
@@ -42,12 +43,12 @@ function Get-FishstrapPath {
     return $null
 }
 
-# --- ดาวน์โหลดและติดตั้ง Fishstrap ---
+# ============ STEP 1 — ติดตั้ง Fishstrap ============
 function Install-Fishstrap {
     Write-Host ""
     Write-Host "[STEP 1] ติดตั้ง Fishstrap..." -ForegroundColor Yellow
 
-    $installerUrl = "https://github.com/midaskira/Fishstrap/releases/latest/download/Fishstrap.exe"
+    $installerUrl  = "https://github.com/midaskira/Fishstrap/releases/latest/download/Fishstrap.exe"
     $installerPath = "$env:TEMP\FishstrapSetup.exe"
 
     try {
@@ -58,11 +59,11 @@ function Install-Fishstrap {
         Write-Host "  [OK] ติดตั้ง Fishstrap เสร็จสิ้น" -ForegroundColor Green
     } catch {
         Write-Host "  [ERROR] ดาวน์โหลดไม่สำเร็จ: $_" -ForegroundColor Red
-        Write-Host "  กรุณาดาวน์โหลดและติดตั้ง Fishstrap เองที่: https://github.com/midaskira/Fishstrap/releases" -ForegroundColor Yellow
+        Write-Host "  กรุณาดาวน์โหลดเองที่: https://github.com/midaskira/Fishstrap/releases" -ForegroundColor Yellow
     }
 }
 
-# --- เขียน FFlag ---
+# ============ STEP 2 — FFlags ============
 function Set-FFlags {
     param($fishstrapPath)
 
@@ -71,92 +72,135 @@ function Set-FFlags {
 
     $fflagPath = "$fishstrapPath\ClientAppSettings.json"
 
-    $fflags = @{
-        # Texture Quality
-        "DFFlagTextureQualityOverrideEnabled" = "True"
-        "DFIntTextureQualityOverride"         = "0"
-
-        # MSAA ปิด
-        "FIntDebugForceMSAASamples"           = "-1"
-
-        # Grass ปิด
-        "FIntFRMMinGrassDistance"             = "0"
-        "FIntFRMMaxGrassDistance"             = "0"
-        "FIntGrassMovementReducedMotionFactor" = "0"
-
-        # LOD ต่ำสุด
+    $fflags = [ordered]@{
+        "DFFlagTextureQualityOverrideEnabled"       = "True"
+        "DFIntTextureQualityOverride"               = "0"
+        "FIntDebugForceMSAASamples"                 = "-1"
+        "FIntFRMMinGrassDistance"                   = "0"
+        "FIntFRMMaxGrassDistance"                   = "0"
+        "FIntGrassMovementReducedMotionFactor"      = "0"
         "DFIntCSGLevelOfDetailSwitchingDistance"    = "0"
         "DFIntCSGLevelOfDetailSwitchingDistanceL12" = "0"
         "DFIntCSGLevelOfDetailSwitchingDistanceL23" = "0"
         "DFIntCSGLevelOfDetailSwitchingDistanceL34" = "0"
-
-        # Sky เทา (ประหยัด render)
-        "FFlagDebugSkyGray"                   = "True"
-
-        # Graphics D3D11
-        "FFlagDebugGraphicsPreferD3D11"       = "True"
-
-        # Fullscreen
-        "FFlagHandleAltEnterFullscreenManually" = "False"
+        "FFlagDebugSkyGray"                         = "True"
+        "FFlagDebugGraphicsPreferD3D11"             = "True"
+        "FFlagHandleAltEnterFullscreenManually"     = "False"
     }
 
     $fflags | ConvertTo-Json -Depth 2 | Set-Content -Path $fflagPath -Encoding UTF8
     Write-Host "  [OK] FFlags บันทึกที่: $fflagPath" -ForegroundColor Green
 }
 
-# --- ตั้งค่า Fishstrap Config ---
+# ============ STEP 3 — Settings.json ============
 function Set-FishstrapConfig {
     param($fishstrapPath)
 
     Write-Host ""
-    Write-Host "[STEP 3] ตั้งค่า Fishstrap Config..." -ForegroundColor Yellow
+    Write-Host "[STEP 3] ตั้งค่า Fishstrap Settings..." -ForegroundColor Yellow
 
-    $configPath = "$fishstrapPath\Config.json"
+    $configPath = "$fishstrapPath\Settings.json"
 
-    $config = @{
-        "MultiInstanceEnabled"     = $true
-        "RenderingMode"            = "Direct3D11"
-        "DiscordRichPresence"      = $false
-        "CheckForUpdates"          = $true
-        "Theme"                    = "Dark"
+    $config = [ordered]@{
+        "AllowCookieAccess"                    = $false
+        "BootstrapperStyle"                    = 8
+        "BootstrapperIcon"                     = 1
+        "BootstrapperTitle"                    = "Fishstrap"
+        "BootstrapperIconCustomLocation"       = ""
+        "Theme"                                = 2
+        "ForceLocalData"                       = $false
+        "CheckForUpdates"                      = $true
+        "MultiInstanceLaunching"               = $true
+        "ConfirmLaunches"                      = $false
+        "Locale"                               = "nil"
+        "ForceRobloxLanguage"                  = $false
+        "UseFastFlagManager"                   = $true
+        "WPFSoftwareRender"                    = $false
+        "EnableAnalytics"                      = $false
+        "UpdateRoblox"                         = $true
+        "StaticDirectory"                      = $false
+        "Channel"                              = "production"
+        "ChannelChangeMode"                    = 2
+        "ChannelHash"                          = ""
+        "DownloadingStringFormat"              = "Downloading {0} - {1}MB / {2}MB"
+        "SelectedCustomTheme"                  = $null
+        "BackgroundUpdatesEnabled"             = $false
+        "DebugDisableVersionPackageCleanup"    = $false
+        "EnableBetterMatchmaking"              = $true
+        "EnableBetterMatchmakingRandomization" = $false
+        "WebEnvironment"                       = "Production"
+        "CleanerOptions"                       = 1
+        "CleanerDirectories"                   = @("RobloxCache", "RobloxLogs", "FishstrapLogs")
+        "EnableActivityTracking"               = $false
+        "UseDiscordRichPresence"               = $false
+        "HideRPCButtons"                       = $true
+        "ShowAccountOnRichPresence"            = $false
+        "ShowServerDetails"                    = $false
+        "CustomIntegrations"                   = @()
+        "UseDisableAppPatch"                   = $false
     }
 
-    $config | ConvertTo-Json -Depth 2 | Set-Content -Path $configPath -Encoding UTF8
-    Write-Host "  [OK] Config บันทึกที่: $configPath" -ForegroundColor Green
+    $config | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath -Encoding UTF8
+    Write-Host "  [OK] Settings บันทึกที่: $configPath" -ForegroundColor Green
 }
 
-# --- ตั้งค่า Process Priority อัตโนมัติ ---
+# ============ STEP 4 — GlobalBasicSettings ============
+function Set-RobloxGameSettings {
+    Write-Host ""
+    Write-Host "[STEP 4] ตั้งค่า Roblox Game Settings..." -ForegroundColor Yellow
+
+    $targetPath = "$env:LOCALAPPDATA\Roblox\GlobalBasicSettings_13.xml"
+    $xmlUrl     = "$RAW_BASE/GlobalBasicSettings_13.xml"
+
+    try {
+        $targetDir = Split-Path $targetPath
+        if (-not (Test-Path $targetDir)) {
+            New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+        }
+        Invoke-WebRequest -Uri $xmlUrl -OutFile $targetPath -UseBasicParsing
+        Write-Host "  [OK] Game Settings บันทึกที่: $targetPath" -ForegroundColor Green
+    } catch {
+        Write-Host "  [ERROR] ดาวน์โหลดไม่สำเร็จ: $_" -ForegroundColor Red
+        Write-Host "  กรุณาอัปโหลด GlobalBasicSettings_13.xml ขึ้น GitHub repo ด้วย" -ForegroundColor Yellow
+    }
+}
+
+# ============ STEP 5 — Priority Script ============
 function Set-RobloxPriority {
     Write-Host ""
-    Write-Host "[STEP 4] สร้าง Priority Script..." -ForegroundColor Yellow
+    Write-Host "[STEP 5] สร้าง Priority Script..." -ForegroundColor Yellow
 
     $priorityScript = @'
-# Roblox Process Optimizer — Auto Priority & Affinity
-$priority = "BelowNormal"
-$coresPerInstance = 1
-$totalCores = (Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+# ============================================
+# Roblox Optimizer — Priority BelowNormal
+# ไม่ Lock Affinity — ให้ Windows กระจาย Core เอง
+# ============================================
 
-Write-Host "Total Cores: $totalCores" -ForegroundColor Cyan
+$priority = "BelowNormal"
+
+$totalCores = (Get-CimInstance Win32_Processor |
+    Measure-Object -Property NumberOfLogicalProcessors -Sum).Sum
+$cpuCount = (Get-CimInstance Win32_Processor).Count
+
+Write-Host "=== Roblox Optimizer ===" -ForegroundColor Cyan
+Write-Host "CPU: $cpuCount หัว | Total Cores: $totalCores" -ForegroundColor Cyan
+Write-Host "Mode: Priority BelowNormal (ไม่ Lock Affinity)" -ForegroundColor Cyan
+Write-Host ""
 
 function Set-RobloxOptimization {
     $processes = Get-Process -Name "RobloxPlayerBeta" -ErrorAction SilentlyContinue
+
     if ($processes.Count -eq 0) {
         Write-Host "[$(Get-Date -Format 'HH:mm:ss')] รอ Roblox..." -ForegroundColor Yellow
         return
     }
+
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] พบ $($processes.Count) instance" -ForegroundColor Green
-    $coreIndex = 0
+
     foreach ($proc in $processes) {
         try {
             $proc.PriorityClass = $priority
-            $mask = 0
-            for ($i = 0; $i -lt $coresPerInstance; $i++) {
-                $core = ($coreIndex + $i) % $totalCores
-                $mask = $mask -bor (1 -shl $core)
-            }
-            $proc.ProcessorAffinity = $mask
-            $coreIndex = ($coreIndex + $coresPerInstance) % $totalCores
-            Write-Host "  PID $($proc.Id) → Mask: $mask" -ForegroundColor Green
+            Write-Host "  PID $($proc.Id) → BelowNormal" -ForegroundColor Green
         } catch {
             Write-Host "  Error PID $($proc.Id)" -ForegroundColor Red
         }
@@ -172,13 +216,42 @@ while ($true) {
     $scriptPath = "$env:USERPROFILE\Desktop\RobloxOptimizer.ps1"
     $priorityScript | Set-Content -Path $scriptPath -Encoding UTF8
     Write-Host "  [OK] บันทึก RobloxOptimizer.ps1 ไว้ที่ Desktop" -ForegroundColor Green
-    Write-Host "  รัน script นี้ทุกครั้งที่เปิด bot" -ForegroundColor Yellow
 }
 
-# --- ปิด Services ที่ไม่จำเป็น ---
+# ============ STEP 6 — Auto Start ============
+function Register-AutoStart {
+    Write-Host ""
+    Write-Host "[STEP 6] ตั้งค่า Auto Start เมื่อ Login..." -ForegroundColor Yellow
+
+    $taskName  = "RobloxOptimizer"
+    $scriptPath = "$env:USERPROFILE\Desktop\RobloxOptimizer.ps1"
+
+    $action = New-ScheduledTaskAction `
+        -Execute "powershell.exe" `
+        -Argument "-WindowStyle Hidden -ExecutionPolicy Bypass -File `"$scriptPath`""
+
+    $trigger = New-ScheduledTaskTrigger -AtLogOn
+
+    $settings = New-ScheduledTaskSettingsSet `
+        -AllowStartIfOnBatteries `
+        -DontStopIfGoingOnBatteries `
+        -RunOnlyIfNetworkAvailable:$false
+
+    Register-ScheduledTask `
+        -TaskName $taskName `
+        -Action $action `
+        -Trigger $trigger `
+        -Settings $settings `
+        -RunLevel Highest `
+        -Force | Out-Null
+
+    Write-Host "  [OK] RobloxOptimizer รันอัตโนมัติทุกครั้งที่ Login" -ForegroundColor Green
+}
+
+# ============ STEP 7 — ปิด Services ============
 function Disable-UnnecessaryServices {
     Write-Host ""
-    Write-Host "[STEP 5] ปิด Services ที่ไม่จำเป็น..." -ForegroundColor Yellow
+    Write-Host "[STEP 7] ปิด Services ที่ไม่จำเป็น..." -ForegroundColor Yellow
 
     $services = @("WSearch", "Spooler", "SysMain")
     foreach ($svc in $services) {
@@ -209,28 +282,31 @@ if ($null -eq $fishstrapPath) {
 }
 
 if ($null -ne $fishstrapPath) {
-    Set-FFlags -fishstrapPath $fishstrapPath
+    Set-FFlags       -fishstrapPath $fishstrapPath
     Set-FishstrapConfig -fishstrapPath $fishstrapPath
 } else {
     Write-Host "[WARN] ไม่พบ Fishstrap Path — ข้ามขั้นตอน FFlag และ Config" -ForegroundColor Red
 }
 
+Set-RobloxGameSettings
 Set-RobloxPriority
+Register-AutoStart
 Disable-UnnecessaryServices
 
 Write-Host ""
 Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "   ✅ Setup เสร็จสิ้น!" -ForegroundColor Green
+Write-Host "         ✅ Setup เสร็จสิ้น!               " -ForegroundColor Green
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "สิ่งที่ทำเสร็จแล้ว:" -ForegroundColor White
-Write-Host "  ✅ FFlags (Allowlist) ตั้งค่าแล้ว" -ForegroundColor Green
-Write-Host "  ✅ Fishstrap Config ตั้งค่าแล้ว" -ForegroundColor Green
-Write-Host "  ✅ RobloxOptimizer.ps1 อยู่ที่ Desktop" -ForegroundColor Green
-Write-Host "  ✅ Services ที่ไม่จำเป็นถูกปิดแล้ว" -ForegroundColor Green
+Write-Host "  ✅ FFlags (Allowlist) ตั้งค่าแล้ว"                  -ForegroundColor Green
+Write-Host "  ✅ Settings.json เขียนทับด้วย config ที่ตั้งมาแล้ว" -ForegroundColor Green
+Write-Host "  ✅ GlobalBasicSettings_13.xml วางถูก path แล้ว"     -ForegroundColor Green
+Write-Host "  ✅ Priority BelowNormal (ไม่ Lock Affinity)"         -ForegroundColor Green
+Write-Host "  ✅ RobloxOptimizer รันอัตโนมัติตอน Login"           -ForegroundColor Green
+Write-Host "  ✅ Services ที่ไม่จำเป็นถูกปิดแล้ว"                -ForegroundColor Green
 Write-Host ""
 Write-Host "สิ่งที่ต้องทำเพิ่ม:" -ForegroundColor Yellow
-Write-Host "  → ติดตั้ง ISLC จาก wagnardsoft.com" -ForegroundColor Yellow
-Write-Host "  → รัน RobloxOptimizer.ps1 ทุกครั้งที่เปิด bot" -ForegroundColor Yellow
+Write-Host "  → ติดตั้ง ISLC จาก wagnardsoft.com"                 -ForegroundColor Yellow
 Write-Host ""
 pause
