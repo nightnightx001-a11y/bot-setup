@@ -150,8 +150,8 @@ function Set-RobloxGameSettings {
     Write-Host "[STEP 4] ตั้งค่า Roblox Game Settings..." -ForegroundColor Yellow
 
     $targetPath = "$env:LOCALAPPDATA\Roblox\GlobalBasicSettings_13.xml"
+    $targetDir  = "$env:LOCALAPPDATA\Roblox"
     $xmlUrl     = "$RAW_BASE/GlobalBasicSettings_13.xml"
-    $targetDir  = Split-Path $targetPath
 
     try {
         # สร้างโฟลเดอร์ถ้าไม่มี
@@ -159,13 +159,10 @@ function Set-RobloxGameSettings {
             New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         }
 
-        # Force permission ให้ Administrator เข้าถึงได้
-        $acl = Get-Acl $targetDir
-        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
-            "Administrator", "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow"
-        )
-        $acl.SetAccessRule($rule)
-        Set-Acl -Path $targetDir -AclObject $acl
+        # Force ownership และ permission ด้วย takeown + icacls
+        Write-Host "  กำลัง unlock permission..." -ForegroundColor Cyan
+        & takeown /f $targetDir /r /d y 2>&1 | Out-Null
+        & icacls $targetDir /grant "Administrator:(OI)(CI)F" /t /c 2>&1 | Out-Null
 
         # ดาวน์โหลดและวางไฟล์
         Invoke-WebRequest -Uri $xmlUrl -OutFile $targetPath -UseBasicParsing
