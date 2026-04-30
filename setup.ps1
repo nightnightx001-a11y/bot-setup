@@ -159,14 +159,19 @@ function Set-RobloxGameSettings {
             New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         }
 
-        # Force ownership และ permission ด้วย takeown + icacls
-        Write-Host "  กำลัง unlock permission..." -ForegroundColor Cyan
-        & takeown /f $targetDir /r /d y 2>&1 | Out-Null
-        & icacls $targetDir /grant "Administrator:(OI)(CI)F" /t /c 2>&1 | Out-Null
+        # ถ้าไฟล์มีอยู่แล้ว ลบ ReadOnly attribute ก่อน
+        if (Test-Path $targetPath) {
+            Set-ItemProperty -Path $targetPath -Name IsReadOnly -Value $false
+            Write-Host "  ลบ ReadOnly attribute แล้ว" -ForegroundColor Cyan
+        }
 
         # ดาวน์โหลดและวางไฟล์
         Invoke-WebRequest -Uri $xmlUrl -OutFile $targetPath -UseBasicParsing
-        Write-Host "  [OK] Game Settings บันทึกที่: $targetPath" -ForegroundColor Green
+
+        # ตรวจสอบว่าเขียนสำเร็จ
+        if (Test-Path $targetPath) {
+            Write-Host "  [OK] Game Settings บันทึกที่: $targetPath" -ForegroundColor Green
+        }
     } catch {
         Write-Host "  [ERROR] ไม่สำเร็จ: $_" -ForegroundColor Red
     }
