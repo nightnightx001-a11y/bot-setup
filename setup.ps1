@@ -48,7 +48,7 @@ function Install-Fishstrap {
     Write-Host ""
     Write-Host "[STEP 1] ติดตั้ง Fishstrap..." -ForegroundColor Yellow
 
-    $installerUrl  = "https://github.com/midaskira/Fishstrap/releases/latest/download/Fishstrap.exe"
+    $installerUrl  = "https://github.com/fishstrap/fishstrap/releases/latest/download/Fishstrap.exe"
     $installerPath = "$env:TEMP\FishstrapSetup.exe"
 
     try {
@@ -59,7 +59,7 @@ function Install-Fishstrap {
         Write-Host "  [OK] ติดตั้ง Fishstrap เสร็จสิ้น" -ForegroundColor Green
     } catch {
         Write-Host "  [ERROR] ดาวน์โหลดไม่สำเร็จ: $_" -ForegroundColor Red
-        Write-Host "  กรุณาดาวน์โหลดเองที่: https://github.com/midaskira/Fishstrap/releases" -ForegroundColor Yellow
+        Write-Host "  กรุณาดาวน์โหลดเองที่: https://github.com/fishstrap/fishstrap/releases" -ForegroundColor Yellow
     }
 }
 
@@ -154,21 +154,17 @@ function Set-RobloxGameSettings {
     $xmlUrl     = "$RAW_BASE/GlobalBasicSettings_13.xml"
 
     try {
-        # สร้างโฟลเดอร์ถ้าไม่มี
         if (-not (Test-Path $targetDir)) {
             New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         }
 
-        # ถ้าไฟล์มีอยู่แล้ว ลบ ReadOnly attribute ก่อน
         if (Test-Path $targetPath) {
             Set-ItemProperty -Path $targetPath -Name IsReadOnly -Value $false
             Write-Host "  ลบ ReadOnly attribute แล้ว" -ForegroundColor Cyan
         }
 
-        # ดาวน์โหลดและวางไฟล์
         Invoke-WebRequest -Uri $xmlUrl -OutFile $targetPath -UseBasicParsing
 
-        # ตรวจสอบว่าเขียนสำเร็จ
         if (Test-Path $targetPath) {
             Write-Host "  [OK] Game Settings บันทึกที่: $targetPath" -ForegroundColor Green
         }
@@ -286,7 +282,7 @@ $fishstrapPath = Get-FishstrapPath
 if ($null -eq $fishstrapPath) {
     Write-Host "[INFO] ไม่พบ Fishstrap — จะติดตั้งใหม่" -ForegroundColor Yellow
     Install-Fishstrap
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 5
     $fishstrapPath = Get-FishstrapPath
 } else {
     Write-Host "[INFO] พบ Fishstrap ที่: $fishstrapPath" -ForegroundColor Green
@@ -298,6 +294,7 @@ if ($null -ne $fishstrapPath) {
     Set-FishstrapConfig -fishstrapPath $fishstrapPath
 } else {
     Write-Host "[WARN] ไม่พบ Fishstrap Path — ข้ามขั้นตอน FFlag และ Config" -ForegroundColor Red
+    Write-Host "[WARN] กรุณาติดตั้ง Fishstrap แล้วรัน script ใหม่อีกครั้ง" -ForegroundColor Yellow
 }
 
 Set-RobloxGameSettings
