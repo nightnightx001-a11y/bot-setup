@@ -43,39 +43,10 @@ function Get-FishstrapPath {
     return $null
 }
 
-# ============ STEP 1 — ติดตั้ง .NET Runtime ============
-function Install-DotNet {
-    Write-Host ""
-    Write-Host "[STEP 1] ตรวจสอบและติดตั้ง .NET Desktop Runtime..." -ForegroundColor Yellow
-
-    # เช็คว่ามี .NET 8 อยู่แล้วหรือเปล่า
-    $dotnetInstalled = Get-ChildItem "HKLM:\SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App" -ErrorAction SilentlyContinue |
-        Where-Object { $_.PSChildName -like "8.*" }
-
-    if ($dotnetInstalled) {
-        Write-Host "  [OK] .NET Desktop Runtime 8 มีอยู่แล้ว ข้ามขั้นตอนนี้" -ForegroundColor Green
-        return
-    }
-
-    Write-Host "  ไม่พบ .NET Desktop Runtime 8 — กำลังดาวน์โหลด..." -ForegroundColor Cyan
-
-    $dotnetUrl      = "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe"
-    $dotnetInstaller = "$env:TEMP\dotnet-runtime.exe"
-
-    try {
-        Invoke-WebRequest -Uri $dotnetUrl -OutFile $dotnetInstaller -UseBasicParsing
-        Write-Host "  ดาวน์โหลดสำเร็จ กำลังติดตั้ง..." -ForegroundColor Cyan
-        Start-Process -FilePath $dotnetInstaller -ArgumentList "/install /quiet /norestart" -Wait
-        Write-Host "  [OK] ติดตั้ง .NET Desktop Runtime 8 เสร็จสิ้น" -ForegroundColor Green
-    } catch {
-        Write-Host "  [ERROR] ดาวน์โหลด .NET ไม่สำเร็จ: $_" -ForegroundColor Red
-    }
-}
-
-# ============ STEP 2 — ติดตั้ง Fishstrap ============
+# ============ STEP 1 — ติดตั้ง Fishstrap ============
 function Install-Fishstrap {
     Write-Host ""
-    Write-Host "[STEP 2] ติดตั้ง Fishstrap..." -ForegroundColor Yellow
+    Write-Host "[STEP 1] ติดตั้ง Fishstrap..." -ForegroundColor Yellow
 
     $installerUrl  = "https://github.com/fishstrap/fishstrap/releases/latest/download/Fishstrap.exe"
     $installerPath = "$env:TEMP\FishstrapSetup.exe"
@@ -92,12 +63,12 @@ function Install-Fishstrap {
     }
 }
 
-# ============ STEP 3 — FFlags ============
+# ============ STEP 2 — FFlags ============
 function Set-FFlags {
     param($fishstrapPath)
 
     Write-Host ""
-    Write-Host "[STEP 3] ตั้งค่า FFlags..." -ForegroundColor Yellow
+    Write-Host "[STEP 2] ตั้งค่า FFlags..." -ForegroundColor Yellow
 
     $fflagPath = "$fishstrapPath\ClientAppSettings.json"
 
@@ -121,12 +92,12 @@ function Set-FFlags {
     Write-Host "  [OK] FFlags บันทึกที่: $fflagPath" -ForegroundColor Green
 }
 
-# ============ STEP 4 — Settings.json ============
+# ============ STEP 3 — Settings.json ============
 function Set-FishstrapConfig {
     param($fishstrapPath)
 
     Write-Host ""
-    Write-Host "[STEP 4] ตั้งค่า Fishstrap Settings..." -ForegroundColor Yellow
+    Write-Host "[STEP 3] ตั้งค่า Fishstrap Settings..." -ForegroundColor Yellow
 
     $configPath = "$fishstrapPath\Settings.json"
 
@@ -173,10 +144,10 @@ function Set-FishstrapConfig {
     Write-Host "  [OK] Settings บันทึกที่: $configPath" -ForegroundColor Green
 }
 
-# ============ STEP 5 — GlobalBasicSettings ============
+# ============ STEP 4 — GlobalBasicSettings ============
 function Set-RobloxGameSettings {
     Write-Host ""
-    Write-Host "[STEP 5] ตั้งค่า Roblox Game Settings..." -ForegroundColor Yellow
+    Write-Host "[STEP 4] ตั้งค่า Roblox Game Settings..." -ForegroundColor Yellow
 
     $targetPath = "$env:LOCALAPPDATA\Roblox\GlobalBasicSettings_13.xml"
     $targetDir  = "$env:LOCALAPPDATA\Roblox"
@@ -202,10 +173,10 @@ function Set-RobloxGameSettings {
     }
 }
 
-# ============ STEP 6 — Priority Script ============
+# ============ STEP 5 — Priority Script ============
 function Set-RobloxPriority {
     Write-Host ""
-    Write-Host "[STEP 6] สร้าง Priority Script..." -ForegroundColor Yellow
+    Write-Host "[STEP 5] สร้าง Priority Script..." -ForegroundColor Yellow
 
     $priorityScript = @'
 # ============================================
@@ -255,10 +226,10 @@ while ($true) {
     Write-Host "  [OK] บันทึก RobloxOptimizer.ps1 ไว้ที่ Desktop" -ForegroundColor Green
 }
 
-# ============ STEP 7 — Auto Start ============
+# ============ STEP 6 — Auto Start ============
 function Register-AutoStart {
     Write-Host ""
-    Write-Host "[STEP 7] ตั้งค่า Auto Start เมื่อ Login..." -ForegroundColor Yellow
+    Write-Host "[STEP 6] ตั้งค่า Auto Start เมื่อ Login..." -ForegroundColor Yellow
 
     $taskName   = "RobloxOptimizer"
     $scriptPath = "$env:USERPROFILE\Desktop\RobloxOptimizer.ps1"
@@ -285,10 +256,10 @@ function Register-AutoStart {
     Write-Host "  [OK] RobloxOptimizer รันอัตโนมัติทุกครั้งที่ Login" -ForegroundColor Green
 }
 
-# ============ STEP 8 — ปิด Services ============
+# ============ STEP 7 — ปิด Services ============
 function Disable-UnnecessaryServices {
     Write-Host ""
-    Write-Host "[STEP 8] ปิด Services ที่ไม่จำเป็น..." -ForegroundColor Yellow
+    Write-Host "[STEP 7] ปิด Services ที่ไม่จำเป็น..." -ForegroundColor Yellow
 
     $services = @("WSearch", "Spooler", "SysMain")
     foreach ($svc in $services) {
@@ -305,9 +276,6 @@ function Disable-UnnecessaryServices {
 # ============ MAIN ============
 Write-Header
 Check-Admin
-
-# ลง .NET ก่อนเสมอ
-Install-DotNet
 
 $fishstrapPath = Get-FishstrapPath
 
@@ -340,7 +308,6 @@ Write-Host "         ✅ Setup เสร็จสิ้น!               " -For
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "สิ่งที่ทำเสร็จแล้ว:" -ForegroundColor White
-Write-Host "  ✅ .NET Desktop Runtime 8 ติดตั้งแล้ว"               -ForegroundColor Green
 Write-Host "  ✅ FFlags (Allowlist) ตั้งค่าแล้ว"                   -ForegroundColor Green
 Write-Host "  ✅ Settings.json เขียนทับด้วย config ที่ตั้งมาแล้ว"  -ForegroundColor Green
 Write-Host "  ✅ GlobalBasicSettings_13.xml วางถูก path แล้ว"      -ForegroundColor Green
