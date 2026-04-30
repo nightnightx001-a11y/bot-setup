@@ -151,17 +151,27 @@ function Set-RobloxGameSettings {
 
     $targetPath = "$env:LOCALAPPDATA\Roblox\GlobalBasicSettings_13.xml"
     $xmlUrl     = "$RAW_BASE/GlobalBasicSettings_13.xml"
+    $targetDir  = Split-Path $targetPath
 
     try {
-        $targetDir = Split-Path $targetPath
+        # สร้างโฟลเดอร์ถ้าไม่มี
         if (-not (Test-Path $targetDir)) {
             New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
         }
+
+        # Force permission ให้ Administrator เข้าถึงได้
+        $acl = Get-Acl $targetDir
+        $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+            "Administrator", "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow"
+        )
+        $acl.SetAccessRule($rule)
+        Set-Acl -Path $targetDir -AclObject $acl
+
+        # ดาวน์โหลดและวางไฟล์
         Invoke-WebRequest -Uri $xmlUrl -OutFile $targetPath -UseBasicParsing
         Write-Host "  [OK] Game Settings บันทึกที่: $targetPath" -ForegroundColor Green
     } catch {
-        Write-Host "  [ERROR] ดาวน์โหลดไม่สำเร็จ: $_" -ForegroundColor Red
-        Write-Host "  กรุณาอัปโหลด GlobalBasicSettings_13.xml ขึ้น GitHub repo ด้วย" -ForegroundColor Yellow
+        Write-Host "  [ERROR] ไม่สำเร็จ: $_" -ForegroundColor Red
     }
 }
 
@@ -223,7 +233,7 @@ function Register-AutoStart {
     Write-Host ""
     Write-Host "[STEP 6] ตั้งค่า Auto Start เมื่อ Login..." -ForegroundColor Yellow
 
-    $taskName  = "RobloxOptimizer"
+    $taskName   = "RobloxOptimizer"
     $scriptPath = "$env:USERPROFILE\Desktop\RobloxOptimizer.ps1"
 
     $action = New-ScheduledTaskAction `
@@ -282,7 +292,7 @@ if ($null -eq $fishstrapPath) {
 }
 
 if ($null -ne $fishstrapPath) {
-    Set-FFlags       -fishstrapPath $fishstrapPath
+    Set-FFlags          -fishstrapPath $fishstrapPath
     Set-FishstrapConfig -fishstrapPath $fishstrapPath
 } else {
     Write-Host "[WARN] ไม่พบ Fishstrap Path — ข้ามขั้นตอน FFlag และ Config" -ForegroundColor Red
@@ -299,14 +309,14 @@ Write-Host "         ✅ Setup เสร็จสิ้น!               " -For
 Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "สิ่งที่ทำเสร็จแล้ว:" -ForegroundColor White
-Write-Host "  ✅ FFlags (Allowlist) ตั้งค่าแล้ว"                  -ForegroundColor Green
-Write-Host "  ✅ Settings.json เขียนทับด้วย config ที่ตั้งมาแล้ว" -ForegroundColor Green
-Write-Host "  ✅ GlobalBasicSettings_13.xml วางถูก path แล้ว"     -ForegroundColor Green
-Write-Host "  ✅ Priority BelowNormal (ไม่ Lock Affinity)"         -ForegroundColor Green
-Write-Host "  ✅ RobloxOptimizer รันอัตโนมัติตอน Login"           -ForegroundColor Green
-Write-Host "  ✅ Services ที่ไม่จำเป็นถูกปิดแล้ว"                -ForegroundColor Green
+Write-Host "  ✅ FFlags (Allowlist) ตั้งค่าแล้ว"                   -ForegroundColor Green
+Write-Host "  ✅ Settings.json เขียนทับด้วย config ที่ตั้งมาแล้ว"  -ForegroundColor Green
+Write-Host "  ✅ GlobalBasicSettings_13.xml วางถูก path แล้ว"      -ForegroundColor Green
+Write-Host "  ✅ Priority BelowNormal (ไม่ Lock Affinity)"          -ForegroundColor Green
+Write-Host "  ✅ RobloxOptimizer รันอัตโนมัติตอน Login"            -ForegroundColor Green
+Write-Host "  ✅ Services ที่ไม่จำเป็นถูกปิดแล้ว"                 -ForegroundColor Green
 Write-Host ""
 Write-Host "สิ่งที่ต้องทำเพิ่ม:" -ForegroundColor Yellow
-Write-Host "  → ติดตั้ง ISLC จาก wagnardsoft.com"                 -ForegroundColor Yellow
+Write-Host "  → ติดตั้ง ISLC จาก wagnardsoft.com"                  -ForegroundColor Yellow
 Write-Host ""
 pause
